@@ -32,9 +32,7 @@ yarn-error.log*
 # Test coverage
 coverage/
 
-# Claude artifacts (keep .claude for project settings but ignore session data)
-.claude/projects/
-.claude/todos/
+# Claude session transcripts (large files, not needed for project setup)
 .claude/*.jsonl
 
 # Temporary files
