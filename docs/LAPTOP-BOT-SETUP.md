@@ -155,8 +155,52 @@ Invoke-RestMethod -Method Post "https://api.telegram.org/bot8594075695:AAEbsUx01
 - **Bot:** @peflaptopbot
 - **Token:** `8594075695:AAEbsUx01Yu9GO7iUcxT7PQMM0D2ATlMWP4`
 
+## Running as Windows Service (Auto-Restart)
+
+To run the gateway as a Windows service that auto-restarts on crash and starts on boot:
+
+### Install Service
+
+Run PowerShell as Administrator:
+
+```powershell
+.\scripts\install-gateway-service.ps1
+```
+
+This will:
+- Download NSSM (Non-Sucking Service Manager) if needed
+- Create a Windows service named `peflaptopbot`
+- Configure auto-restart on crash (5 second delay)
+- Set up log rotation
+- Start the service
+
+### Service Management
+
+```powershell
+# Check status
+nssm status peflaptopbot
+
+# View logs
+Get-Content "$env:USERPROFILE\.clawdbot\logs\gateway.log" -Tail 50
+
+# Restart
+nssm restart peflaptopbot
+
+# Stop
+nssm stop peflaptopbot
+
+# Uninstall
+.\scripts\uninstall-gateway-service.ps1
+```
+
+### Log Files
+
+- `%USERPROFILE%\.clawdbot\logs\gateway.log` - Standard output
+- `%USERPROFILE%\.clawdbot\logs\gateway-error.log` - Error output
+
 ## Notes
 
 - The Cloudflare quick tunnel URL changes each time you restart cloudflared
 - For a permanent URL, create a named Cloudflare Tunnel with your Cloudflare account
 - The gateway must be running before setting the webhook, otherwise Telegram will get connection errors
+- When using the Windows service, logs go to `%USERPROFILE%\.clawdbot\logs\` instead of the terminal
