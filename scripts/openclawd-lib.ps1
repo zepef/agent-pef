@@ -188,7 +188,7 @@ function New-ClawdbotConfig {
         [string]$TunnelUrl
     )
 
-    $webhookUrl = "$TunnelUrl/telegram/webhook"
+    $webhookUrl = "$TunnelUrl/telegram-webhook"
     Write-Log "Webhook URL: $webhookUrl" -Level debug
 
     # Generate a stable gateway token based on profile name (or use env var)
@@ -218,6 +218,7 @@ function New-ClawdbotConfig {
                 groupPolicy = if ($Profile.telegram.groupPolicy) { $Profile.telegram.groupPolicy } else { "open" }
                 allowFrom = @(if ($Profile.telegram.allowFrom) { $Profile.telegram.allowFrom } else { "*" })
                 streamMode = if ($Profile.telegram.streamMode) { $Profile.telegram.streamMode } else { "partial" }
+                replyToMode = "first"
             }
         }
         agents = if ($Profile.agents) { $Profile.agents } else { @{

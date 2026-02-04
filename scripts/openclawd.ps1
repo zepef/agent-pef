@@ -85,10 +85,12 @@ function Start-Orchestrator {
     $profileConfig = Get-Profile $ProfileName
     $logDir = Get-ProfileLogDir $ProfileName
     $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
+    # Webhook server runs on port 8787 by default (separate from gateway port)
+    $webhookPort = if ($profileConfig.webhookPort) { $profileConfig.webhookPort } else { 8787 }
     $displayName = if ($profileConfig.displayName) { $profileConfig.displayName } else { $ProfileName }
 
     Write-Host "Profile: $ProfileName ($displayName)" -ForegroundColor White
-    Write-Host "Port: $port" -ForegroundColor White
+    Write-Host "Gateway Port: $port | Webhook Port: $webhookPort" -ForegroundColor White
     Write-Host ""
 
     # Step 1: Start cloudflared named tunnel
@@ -112,8 +114,9 @@ function Start-Orchestrator {
         $tunnelUrl = "https://$ProfileName.neuralnest.pro"
     } else {
         Write-Host "  Using quick tunnel (no named tunnel config found)" -ForegroundColor Yellow
+        Write-Host "  Tunnel will forward to webhook server on port $webhookPort" -ForegroundColor Gray
         $tunnelProcess = Start-Process -FilePath "cloudflared.cmd" `
-            -ArgumentList "tunnel", "--url", "http://localhost:$port" `
+            -ArgumentList "tunnel", "--url", "http://localhost:$webhookPort" `
             -RedirectStandardError $tunnelLogFile `
             -WindowStyle Hidden `
             -PassThru
@@ -152,7 +155,7 @@ function Start-Orchestrator {
 
     # Step 4: Register webhook with Telegram (with retries for DNS propagation)
     Write-Host "[4/6] Registering Telegram webhook..." -ForegroundColor Cyan
-    $webhookUrl = "$tunnelUrl/telegram/webhook"
+    $webhookUrl = "$tunnelUrl/telegram-webhook"
 
     $maxRetries = 5
     $retryDelay = 10
@@ -185,9 +188,9 @@ function Start-Orchestrator {
     try {
         $webhookInfo = Get-TelegramWebhookInfo -BotToken $profileConfig.botToken
         if ($webhookInfo.url -eq $webhookUrl) {
-            Write-Host "  Webhook verified!" -ForegroundColor Green
+            Write-Host "  Webhook verified: $($webhookInfo.url)" -ForegroundColor Green
         } else {
-            Write-Host "  Webhook URL mismatch: $($webhookInfo.url)" -ForegroundColor Yellow
+            Write-Host "  Warning: Webhook mismatch. Expected: $webhookUrl, Got: $($webhookInfo.url)" -ForegroundColor Yellow
         }
     } catch {
         Write-Host "  Could not verify webhook: $_" -ForegroundColor Yellow
@@ -247,7 +250,7 @@ function Start-Orchestrator {
     Write-Host ""
     Write-Host "Profile:    $ProfileName" -ForegroundColor White
     Write-Host "Tunnel:     $tunnelUrl" -ForegroundColor White
-    Write-Host "Webhook:    $webhookUrl" -ForegroundColor White
+    Write-Host "Webhook:    $tunnelUrl/telegram-webhook" -ForegroundColor White
     Write-Host "Gateway:    http://localhost:$port" -ForegroundColor White
     Write-Host ""
     Write-Host "Logs:       $logDir" -ForegroundColor Gray
