@@ -91,34 +91,54 @@ function Start-Orchestrator {
     Write-Host "Port: $port" -ForegroundColor White
     Write-Host ""
 
-    # Step 1: Start cloudflared tunnel
+    # Step 1: Start cloudflared named tunnel
     Write-Host "[1/6] Starting Cloudflare tunnel..." -ForegroundColor Cyan
     $tunnelLogFile = Join-Path $logDir "tunnel.log"
+    $tunnelConfigFile = Join-Path $env:USERPROFILE ".cloudflared\config-$ProfileName.yml"
 
     # Clear old tunnel log
     if (Test-Path $tunnelLogFile) {
         Clear-Content $tunnelLogFile -ErrorAction SilentlyContinue
     }
 
-    $tunnelProcess = Start-Process -FilePath "cloudflared.cmd" `
-        -ArgumentList "tunnel", "--url", "http://localhost:$port" `
-        -RedirectStandardError $tunnelLogFile `
-        -WindowStyle Hidden `
-        -PassThru
+    # Check if named tunnel config exists, otherwise fall back to quick tunnel
+    if (Test-Path $tunnelConfigFile) {
+        Write-Host "  Using named tunnel: $ProfileName.neuralnest.pro" -ForegroundColor Gray
+        $tunnelProcess = Start-Process -FilePath "npx.cmd" `
+            -ArgumentList "cloudflared", "tunnel", "--config", $tunnelConfigFile, "run" `
+            -RedirectStandardError $tunnelLogFile `
+            -WindowStyle Hidden `
+            -PassThru
+        $tunnelUrl = "https://$ProfileName.neuralnest.pro"
+    } else {
+        Write-Host "  Using quick tunnel (no named tunnel config found)" -ForegroundColor Yellow
+        $tunnelProcess = Start-Process -FilePath "cloudflared.cmd" `
+            -ArgumentList "tunnel", "--url", "http://localhost:$port" `
+            -RedirectStandardError $tunnelLogFile `
+            -WindowStyle Hidden `
+            -PassThru
+        $tunnelUrl = $null
+    }
 
     Save-ProcessId -ProfileName $ProfileName -ProcessType "tunnel" -ProcessId $tunnelProcess.Id
     Write-Log "Started cloudflared with PID $($tunnelProcess.Id)" -Level info -ProfileName $ProfileName
 
-    # Step 2: Wait for tunnel URL
-    Write-Host "[2/6] Waiting for tunnel URL..." -ForegroundColor Cyan
-    $tunnelUrl = Wait-ForTunnelUrl -LogFile $tunnelLogFile -TimeoutSeconds 60
+    # Step 2: Wait for tunnel to be ready
+    Write-Host "[2/6] Waiting for tunnel..." -ForegroundColor Cyan
 
     if (-not $tunnelUrl) {
-        Write-Host "Failed to get tunnel URL within timeout!" -ForegroundColor Red
-        Write-Log "Tunnel URL timeout" -Level error -ProfileName $ProfileName
-        Stop-ProcessGracefully -ProcessId $tunnelProcess.Id | Out-Null
-        Remove-PidFile -ProfileName $ProfileName -ProcessType "tunnel"
-        return
+        # Quick tunnel - need to wait for URL
+        $tunnelUrl = Wait-ForTunnelUrl -LogFile $tunnelLogFile -TimeoutSeconds 60
+        if (-not $tunnelUrl) {
+            Write-Host "Failed to get tunnel URL within timeout!" -ForegroundColor Red
+            Write-Log "Tunnel URL timeout" -Level error -ProfileName $ProfileName
+            Stop-ProcessGracefully -ProcessId $tunnelProcess.Id | Out-Null
+            Remove-PidFile -ProfileName $ProfileName -ProcessType "tunnel"
+            return
+        }
+    } else {
+        # Named tunnel - wait for connection
+        Start-Sleep -Seconds 3
     }
 
     Save-TunnelUrl -ProfileName $ProfileName -TunnelUrl $tunnelUrl
@@ -130,22 +150,34 @@ function Start-Orchestrator {
     New-ClawdbotConfig -Profile $profileConfig -TunnelUrl $tunnelUrl | Out-Null
     Write-Log "Config generated at $script:ConfigFile" -Level info -ProfileName $ProfileName
 
-    # Step 4: Register webhook
+    # Step 4: Register webhook with Telegram (with retries for DNS propagation)
     Write-Host "[4/6] Registering Telegram webhook..." -ForegroundColor Cyan
-    $webhookUrl = "$tunnelUrl/telegram-webhook"
+    $webhookUrl = "$tunnelUrl/telegram/webhook"
 
-    try {
-        $webhookSet = Set-TelegramWebhook -BotToken $profileConfig.botToken -WebhookUrl $webhookUrl
-        if ($webhookSet) {
-            Write-Host "  Webhook registered: $webhookUrl" -ForegroundColor Green
-            Write-Log "Webhook registered: $webhookUrl" -Level info -ProfileName $ProfileName
-        } else {
-            throw "Webhook registration returned false"
+    $maxRetries = 5
+    $retryDelay = 10
+    $webhookSet = $false
+
+    for ($i = 1; $i -le $maxRetries; $i++) {
+        try {
+            $webhookSet = Set-TelegramWebhook -BotToken $profileConfig.botToken -WebhookUrl $webhookUrl
+            if ($webhookSet) {
+                Write-Host "  Webhook registered: $webhookUrl" -ForegroundColor Green
+                Write-Log "Webhook registered: $webhookUrl" -Level info -ProfileName $ProfileName
+                break
+            } else {
+                throw "Webhook registration returned false"
+            }
+        } catch {
+            if ($i -lt $maxRetries) {
+                Write-Host "  Attempt $i failed, waiting ${retryDelay}s for DNS propagation..." -ForegroundColor Yellow
+                Start-Sleep -Seconds $retryDelay
+                $retryDelay = [Math]::Min($retryDelay * 2, 60)  # Exponential backoff, max 60s
+            } else {
+                Write-Host "  Failed to register webhook after $maxRetries attempts: $_" -ForegroundColor Red
+                Write-Log "Webhook registration failed after $maxRetries attempts: $_" -Level error -ProfileName $ProfileName
+            }
         }
-    } catch {
-        Write-Host "  Failed to register webhook: $_" -ForegroundColor Red
-        Write-Log "Webhook registration failed: $_" -Level error -ProfileName $ProfileName
-        # Continue anyway - webhook might be set from previous run
     }
 
     # Step 5: Verify webhook
@@ -170,15 +202,16 @@ function Start-Orchestrator {
         Clear-Content $gatewayLogFile -ErrorAction SilentlyContinue
     }
 
+    $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
     $gatewayProcess = Start-Process -FilePath "npx.cmd" `
-        -ArgumentList "clawdbot", "gateway" `
+        -ArgumentList "clawdbot", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
         -RedirectStandardOutput $gatewayLogFile `
         -RedirectStandardError (Join-Path $logDir "gateway-error.log") `
         -WindowStyle Hidden `
         -PassThru
 
     Save-ProcessId -ProfileName $ProfileName -ProcessType "gateway" -ProcessId $gatewayProcess.Id
-    Write-Log "Started gateway with PID $($gatewayProcess.Id)" -Level info -ProfileName $ProfileName
+    Write-Log "Started gateway with PID $($gatewayProcess.Id) (port $port, bind lan)" -Level info -ProfileName $ProfileName
 
     # Give gateway a moment to start
     Start-Sleep -Seconds 2
@@ -1000,16 +1033,17 @@ function Invoke-GatewayRestart {
         $profileConfig = Get-Profile $ProfileName
         $logDir = Get-ProfileLogDir $ProfileName
         $gatewayLogFile = Join-Path $logDir "gateway.log"
+        $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
 
         $gatewayProcess = Start-Process -FilePath "npx.cmd" `
-            -ArgumentList "clawdbot", "gateway" `
+            -ArgumentList "clawdbot", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
             -RedirectStandardOutput $gatewayLogFile `
             -RedirectStandardError (Join-Path $logDir "gateway-error.log") `
             -WindowStyle Hidden `
             -PassThru
 
         Save-ProcessId -ProfileName $ProfileName -ProcessType "gateway" -ProcessId $gatewayProcess.Id
-        Write-Log "Gateway restarted with PID $($gatewayProcess.Id)" -Level info -LogFile $LogFile
+        Write-Log "Gateway restarted with PID $($gatewayProcess.Id) (port $port, bind lan)" -Level info -LogFile $LogFile
     } catch {
         Write-Log "Failed to restart gateway: $_" -Level error -LogFile $LogFile
     }
@@ -1094,16 +1128,17 @@ function Invoke-FullRestart {
         # Start gateway
         $gatewayLogFile = Join-Path $logDir "gateway.log"
         Clear-Content $gatewayLogFile -ErrorAction SilentlyContinue
+        $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
 
         $gatewayProcess = Start-Process -FilePath "npx.cmd" `
-            -ArgumentList "clawdbot", "gateway" `
+            -ArgumentList "clawdbot", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
             -RedirectStandardOutput $gatewayLogFile `
             -RedirectStandardError (Join-Path $logDir "gateway-error.log") `
             -WindowStyle Hidden `
             -PassThru
 
         Save-ProcessId -ProfileName $ProfileName -ProcessType "gateway" -ProcessId $gatewayProcess.Id
-        Write-Log "Gateway restarted with PID $($gatewayProcess.Id)" -Level info -LogFile $LogFile
+        Write-Log "Gateway restarted with PID $($gatewayProcess.Id) (port $port, bind lan)" -Level info -LogFile $LogFile
 
         Write-Log "Full restart completed successfully" -Level info -LogFile $LogFile
 

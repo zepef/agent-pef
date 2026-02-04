@@ -26,13 +26,50 @@ Write-Host "=== PEF Laptop Bot Gateway Service Installer ===" -ForegroundColor C
 if (-not (Test-Path $NssmPath)) {
     Write-Host "`n[1/5] Downloading NSSM..." -ForegroundColor Yellow
     $nssmZip = "$env:TEMP\nssm.zip"
-    Invoke-WebRequest -Uri "https://nssm.cc/release/nssm-2.24.zip" -OutFile $nssmZip
+
+    # Try multiple download sources
+    $urls = @(
+        "https://nssm.cc/release/nssm-2.24.zip",
+        "https://github.com/kirillkovalenko/nssm/releases/download/v2.24-101-g897c7ad/nssm-2.24-101-g897c7ad.zip",
+        "https://objects.githubusercontent.com/github-production-release-asset-2e65be/32aborede/nssm-2.24.zip"
+    )
+
+    $downloaded = $false
+    foreach ($url in $urls) {
+        try {
+            Write-Host "Trying: $url" -ForegroundColor Gray
+            Invoke-WebRequest -Uri $url -OutFile $nssmZip -TimeoutSec 30
+            $downloaded = $true
+            break
+        } catch {
+            Write-Host "Failed, trying next source..." -ForegroundColor Yellow
+        }
+    }
+
+    if (-not $downloaded) {
+        Write-Error "Failed to download NSSM from all sources. Please download manually from https://nssm.cc/download"
+        exit 1
+    }
 
     if (-not (Test-Path "C:\tools")) {
         New-Item -ItemType Directory -Path "C:\tools" -Force | Out-Null
     }
     Expand-Archive -Path $nssmZip -DestinationPath "C:\tools" -Force
     Remove-Item $nssmZip -Force
+
+    # Handle different zip structures
+    if (-not (Test-Path $NssmPath)) {
+        # Find nssm.exe and reorganize if needed
+        $found = Get-ChildItem -Path "C:\tools" -Recurse -Filter "nssm.exe" | Where-Object { $_.FullName -like "*win64*" } | Select-Object -First 1
+        if ($found) {
+            $targetDir = "C:\tools\nssm-2.24\win64"
+            if (-not (Test-Path $targetDir)) {
+                New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+            }
+            Copy-Item $found.FullName -Destination $targetDir -Force
+        }
+    }
+
     Write-Host "NSSM installed to C:\tools\nssm-2.24" -ForegroundColor Green
 } else {
     Write-Host "`n[1/5] NSSM already installed" -ForegroundColor Green

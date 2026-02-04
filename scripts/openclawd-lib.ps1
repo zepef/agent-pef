@@ -188,12 +188,26 @@ function New-ClawdbotConfig {
         [string]$TunnelUrl
     )
 
-    $webhookUrl = "$TunnelUrl/telegram-webhook"
+    $webhookUrl = "$TunnelUrl/telegram/webhook"
+    Write-Log "Webhook URL: $webhookUrl" -Level debug
+
+    # Generate a stable gateway token based on profile name (or use env var)
+    $gatewayToken = if ($env:CLAWDBOT_GATEWAY_TOKEN) {
+        $env:CLAWDBOT_GATEWAY_TOKEN
+    } else {
+        # Create a deterministic token from profile name for consistency
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes("openclawd-$($Profile.name)-gateway-token")
+        $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash($bytes)
+        [System.BitConverter]::ToString($hash).Replace("-", "").ToLower()
+    }
 
     $config = @{
         gateway = @{
             port = $Profile.port
             mode = "local"
+            auth = @{
+                token = $gatewayToken
+            }
         }
         channels = @{
             telegram = @{
@@ -222,10 +236,11 @@ function New-ClawdbotConfig {
         }
     }
 
-    # Audio/Voice configuration (OpenAI Whisper for STT, TTS for voice output)
+    # Audio transcription configuration (OpenAI Whisper for STT)
+    # Note: TTS is not supported by clawdbot config schema
     # Requires OPENAI_API_KEY environment variable (passed via env, not config)
     if ($env:OPENAI_API_KEY) {
-        Write-Log "Configuring audio/voice with OpenAI (Whisper STT + TTS)" -Level info
+        Write-Log "Configuring audio transcription with OpenAI Whisper" -Level info
         $config.tools = @{
             media = @{
                 # Speech-to-text (audio transcription via Whisper)
@@ -233,13 +248,6 @@ function New-ClawdbotConfig {
                     enabled = $true
                     models = @(
                         @{ provider = "openai"; model = "whisper-1" }
-                    )
-                }
-                # Text-to-speech (voice output)
-                tts = @{
-                    enabled = $true
-                    models = @(
-                        @{ provider = "openai"; model = "tts-1" }
                     )
                 }
             }
