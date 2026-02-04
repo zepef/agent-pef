@@ -212,6 +212,69 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
     config.channels.slack.enabled = true;
 }
 
+// Audio/Voice configuration (OpenAI Whisper for STT, TTS for voice output)
+// Requires OPENAI_API_KEY environment variable (passed via env, not config)
+if (process.env.OPENAI_API_KEY) {
+    console.log('Configuring audio/voice with OpenAI (Whisper STT + TTS)');
+    config.tools = config.tools || {};
+    config.tools.media = config.tools.media || {};
+
+    // Speech-to-text (audio transcription via Whisper)
+    config.tools.media.audio = {
+        enabled: true,
+        models: [
+            { provider: 'openai', model: 'whisper-1' }
+        ]
+    };
+
+    // Text-to-speech (voice output)
+    config.tools.media.tts = {
+        enabled: true,
+        models: [
+            { provider: 'openai', model: 'tts-1' }
+        ]
+    };
+    // Note: OPENAI_API_KEY is passed via environment variable, not config
+    // The clawdbot runtime reads it from process.env automatically
+}
+
+// Clean up any incomplete openai provider config (missing required fields)
+// This fixes broken configs from previous deployments
+console.log('Checking for incomplete openai provider config...');
+console.log('config.models:', JSON.stringify(config.models));
+if (config.models && config.models.providers && config.models.providers.openai) {
+    const openaiConfig = config.models.providers.openai;
+    console.log('Found openai provider config:', JSON.stringify(openaiConfig));
+    if (!openaiConfig.baseUrl || !openaiConfig.models) {
+        console.log('Removing incomplete openai provider config (missing baseUrl or models)');
+        delete config.models.providers.openai;
+        // Clean up empty objects
+        if (Object.keys(config.models.providers).length === 0) {
+            delete config.models.providers;
+        }
+        if (Object.keys(config.models).length === 0) {
+            delete config.models;
+        }
+    }
+} else {
+    console.log('No openai provider config found (OK)');
+}
+
+// Browser configuration (Cloudflare Browser Rendering via CDP shim)
+// Use direct WebSocket URL for CDP connection
+if (process.env.CDP_SECRET && process.env.WORKER_URL) {
+    const workerHost = process.env.WORKER_URL.replace(/\/$/, '').replace(/^https?:\/\//, '');
+    const cdpUrl = 'wss://' + workerHost + '/cdp?secret=' + process.env.CDP_SECRET;
+    console.log('Configuring browser with CDP URL:', cdpUrl.replace(process.env.CDP_SECRET, '***'));
+
+    config.browser = config.browser || {};
+    config.browser.profiles = config.browser.profiles || {};
+    config.browser.profiles.cloudflare = {
+        cdpUrl: cdpUrl,
+        color: '#F6821F'  // Cloudflare orange - required field
+    };
+}
+
 // Base URL override (e.g., for Cloudflare AI Gateway)
 // Usage: Set AI_GATEWAY_BASE_URL or ANTHROPIC_BASE_URL to your endpoint like:
 //   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/anthropic
@@ -281,6 +344,12 @@ EOFNODE
 # Note: R2 backup sync is handled by the Worker's cron trigger
 echo "Starting Moltbot Gateway..."
 echo "Gateway will be available on port 18789"
+
+# Force kill any existing gateway processes to prevent port conflicts
+# Build timestamp: 2026-02-04T06:45:00Z
+pkill -9 -f "clawdbot gateway" 2>/dev/null || true
+pkill -9 -f "node.*gateway" 2>/dev/null || true
+sleep 2
 
 # Clean up stale lock files
 rm -f /tmp/clawdbot-gateway.lock 2>/dev/null || true

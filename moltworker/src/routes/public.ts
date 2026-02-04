@@ -161,6 +161,40 @@ publicRoutes.post('/api/restart', async (c) => {
   }
 });
 
+// POST /api/force-kill - Force kill all gateway processes (for stuck processes)
+publicRoutes.post('/api/force-kill', async (c) => {
+  const sandbox = c.get('sandbox');
+  const token = c.req.query('token');
+
+  if (!token || token !== c.env.MOLTBOT_GATEWAY_TOKEN) {
+    return c.json({ ok: false, error: 'Invalid token' }, 401);
+  }
+
+  try {
+    // Kill any process using port 18789
+    const fuserProc = await sandbox.startProcess('fuser -k 18789/tcp 2>/dev/null || true');
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Kill any clawdbot/node gateway processes
+    const killProc = await sandbox.startProcess('pkill -9 -f clawdbot || pkill -9 -f "node.*18789" || true');
+    await new Promise(r => setTimeout(r, 2000));
+    const killLogs = await killProc.getLogs();
+
+    // Also remove lock files
+    const cleanProc = await sandbox.startProcess('rm -f /tmp/clawdbot-gateway.lock /root/.clawdbot/gateway.lock /tmp/clawdbot/*.lock 2>/dev/null || true');
+    await new Promise(r => setTimeout(r, 1000));
+
+    return c.json({
+      ok: true,
+      message: 'Force killed all gateway processes',
+      killOutput: killLogs.stdout || '',
+      killError: killLogs.stderr || ''
+    });
+  } catch (err) {
+    return c.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
 // GET /api/process-logs/:id - Get logs from a specific process
 publicRoutes.get('/api/process-logs/:id', async (c) => {
   const sandbox = c.get('sandbox');

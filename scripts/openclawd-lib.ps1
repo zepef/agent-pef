@@ -222,6 +222,32 @@ function New-ClawdbotConfig {
         }
     }
 
+    # Audio/Voice configuration (OpenAI Whisper for STT, TTS for voice output)
+    # Requires OPENAI_API_KEY environment variable (passed via env, not config)
+    if ($env:OPENAI_API_KEY) {
+        Write-Log "Configuring audio/voice with OpenAI (Whisper STT + TTS)" -Level info
+        $config.tools = @{
+            media = @{
+                # Speech-to-text (audio transcription via Whisper)
+                audio = @{
+                    enabled = $true
+                    models = @(
+                        @{ provider = "openai"; model = "whisper-1" }
+                    )
+                }
+                # Text-to-speech (voice output)
+                tts = @{
+                    enabled = $true
+                    models = @(
+                        @{ provider = "openai"; model = "tts-1" }
+                    )
+                }
+            }
+        }
+        # Note: OPENAI_API_KEY is passed via environment variable, not config
+        # The clawdbot runtime reads it from process.env automatically
+    }
+
     $config | ConvertTo-Json -Depth 10 | Set-Content -Path $script:ConfigFile -Encoding UTF8
 
     return $config
