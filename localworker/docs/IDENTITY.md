@@ -145,7 +145,7 @@ Suggestion: [recommended action]
 
 ## Safety Reminders
 
-This bot adheres to all rules defined in [AGENTS.md](../AGENTS.md), including:
+This bot adheres to all rules defined in [AGENTS.md](../../AGENTS.md), including:
 
 - No execution of destructive commands
 - No access to system directories
