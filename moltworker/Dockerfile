@@ -1,6 +1,6 @@
 FROM docker.io/cloudflare/sandbox:0.7.0
 
-# Install Node.js 22 (required by clawdbot) and rsync (for R2 backup sync)
+# Install Node.js 22 (required by openclaw) and rsync (for R2 backup sync)
 # The base image has Node 20, we need to replace it with Node 22
 # Using direct binary download for reliability
 ENV NODE_VERSION=22.13.1
@@ -14,12 +14,12 @@ RUN apt-get update && apt-get install -y xz-utils ca-certificates rsync \
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Install moltbot (CLI is still named clawdbot until upstream renames)
+# Install moltbot (CLI renamed from clawdbot to openclaw as of v2026.2.3)
 # Pin to specific version for reproducible builds
-RUN npm install -g clawdbot@2026.1.24-3 \
-    && clawdbot --version
+RUN npm install -g openclaw@2026.2.3-1 \
+    && openclaw --version
 
-# Create moltbot directories (paths still use clawdbot until upstream renames)
+# Create moltbot directories (data paths still use .clawdbot for backwards compatibility)
 # Templates are stored in /root/.clawdbot-templates for initialization
 RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/.clawdbot-templates \
@@ -27,7 +27,7 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 2026-02-04-v31-telegram-fix
+# Build cache bust: 2026-02-07-v32-openclaw-cve-fix
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 

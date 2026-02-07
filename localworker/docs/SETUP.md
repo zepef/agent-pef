@@ -1,16 +1,16 @@
 # peflaptopbot Local Setup Guide
 
-This guide explains how to run `@peflaptopbot` locally using clawdbot with Cloudflare Tunnel for Telegram webhook support.
+This guide explains how to run `@peflaptopbot` locally using openclaw with Cloudflare Tunnel for Telegram webhook support.
 
 ## Prerequisites
 
 - Node.js installed
-- clawdbot installed globally: `npm install -g clawdbot`
+- openclaw installed globally: `npm install -g openclaw`
 - cloudflared installed: `npm install -g cloudflared` or download from https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
 
 ## Configuration
 
-The clawdbot config is located at `C:\Users\zepef\.clawdbot\clawdbot.json`.
+The openclaw config is located at `C:\Users\zepef\.clawdbot\clawdbot.json`.
 
 ### Key Telegram Settings
 
@@ -28,7 +28,7 @@ The clawdbot config is located at `C:\Users\zepef\.clawdbot\clawdbot.json`.
           "enabled": true
         }
       },
-      "allowFrom": ["*"],
+      "allowFrom": ["*"],  // SECURITY: Replace "*" with specific Telegram user IDs in production
       "groupPolicy": "open",
       "streamMode": "partial",
       "webhookUrl": "<TUNNEL_URL>/telegram-webhook"
@@ -58,7 +58,7 @@ https://random-words-here.trycloudflare.com
 
 Copy this URL - you'll need it for the next steps.
 
-### 2. Update clawdbot Config
+### 2. Update openclaw Config
 
 Edit `C:\Users\zepef\.clawdbot\clawdbot.json` and update the `webhookUrl`:
 
@@ -66,10 +66,10 @@ Edit `C:\Users\zepef\.clawdbot\clawdbot.json` and update the `webhookUrl`:
 "webhookUrl": "https://<YOUR-TUNNEL-URL>/telegram-webhook"
 ```
 
-### 3. Start clawdbot Gateway (Terminal 2)
+### 3. Start openclaw Gateway (Terminal 2)
 
 ```powershell
-clawdbot gateway --port 18790 --verbose
+openclaw gateway --port 18790 --verbose
 ```
 
 Look for this line to confirm Telegram is active:
@@ -122,7 +122,7 @@ Wrong webhook path. Use `/telegram-webhook` (with hyphen).
 
 ### Messages received but not dispatched (polling mode)
 
-This is a known issue with clawdbot polling mode. Use webhook mode with Cloudflare Tunnel instead.
+This is a known issue with older clawdbot polling mode (fixed in openclaw v2026.2.3+). Use webhook mode with Cloudflare Tunnel instead.
 
 ### Gateway won't start - port in use
 
@@ -144,7 +144,7 @@ taskkill /PID <PID> /F
 cloudflared tunnel --url http://localhost:18790
 
 # Terminal 2 - Gateway
-clawdbot gateway --port 18790 --verbose
+openclaw gateway --port 18790 --verbose
 
 # Terminal 3 - Set webhook (replace URL)
 Invoke-RestMethod -Method Post "https://api.telegram.org/bot8594075695:AAEbsUx01Yu9GO7iUcxT7PQMM0D2ATlMWP4/setWebhook?url=https://<TUNNEL-URL>/telegram-webhook"

@@ -148,6 +148,7 @@ function New-Profile {
         telegram = @{
             dmPolicy = "open"
             groupPolicy = "open"
+            # SECURITY: allowFrom = @("*") allows ALL users. Restrict to specific Telegram user IDs in production.
             allowFrom = @("*")
             groups = @{
                 "*" = @{
@@ -216,6 +217,7 @@ function New-ClawdbotConfig {
                 webhookUrl = $webhookUrl
                 dmPolicy = if ($Profile.telegram.dmPolicy) { $Profile.telegram.dmPolicy } else { "open" }
                 groupPolicy = if ($Profile.telegram.groupPolicy) { $Profile.telegram.groupPolicy } else { "open" }
+                # SECURITY: Restrict allowFrom to specific Telegram user IDs in production instead of "*"
                 allowFrom = @(if ($Profile.telegram.allowFrom) { $Profile.telegram.allowFrom } else { "*" })
                 streamMode = if ($Profile.telegram.streamMode) { $Profile.telegram.streamMode } else { "partial" }
                 replyToMode = "first"
@@ -238,7 +240,7 @@ function New-ClawdbotConfig {
     }
 
     # Audio transcription configuration (OpenAI Whisper for STT)
-    # Note: TTS is not supported by clawdbot config schema
+    # Note: TTS is not supported by openclaw config schema
     # Requires OPENAI_API_KEY environment variable (passed via env, not config)
     if ($env:OPENAI_API_KEY) {
         Write-Log "Configuring audio transcription with OpenAI Whisper" -Level info
@@ -254,7 +256,7 @@ function New-ClawdbotConfig {
             }
         }
         # Note: OPENAI_API_KEY is passed via environment variable, not config
-        # The clawdbot runtime reads it from process.env automatically
+        # The openclaw runtime reads it from process.env automatically
     }
 
     $config | ConvertTo-Json -Depth 10 | Set-Content -Path $script:ConfigFile -Encoding UTF8

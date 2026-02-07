@@ -10,7 +10,7 @@ This is a Cloudflare Worker that runs [Moltbot](https://molt.bot/) in a Cloudfla
 - API endpoints at `/api/*` for device pairing
 - Debug endpoints at `/debug/*` for troubleshooting
 
-**Note:** The CLI tool is still named `clawdbot` (upstream hasn't renamed yet), so CLI commands and internal config paths still use that name.
+**Note:** The CLI tool was renamed from `clawdbot` to `openclaw` as of v2026.2.3. Internal data paths (`.clawdbot/`, `clawdbot.json`) are unchanged.
 
 ## Project Structure
 
@@ -50,9 +50,9 @@ src/
 ### CLI Commands
 
 When calling the moltbot CLI from the worker, always include `--url ws://localhost:18789`.
-Note: The CLI is still named `clawdbot` until upstream renames it:
+The CLI is named `openclaw` (renamed from `clawdbot` as of v2026.2.3):
 ```typescript
-sandbox.startProcess('clawdbot devices list --json --url ws://localhost:18789')
+sandbox.startProcess('openclaw devices list --json --url ws://localhost:18789')
 ```
 
 CLI commands take 10-15 seconds due to WebSocket connection overhead. Use `waitForProcess()` helper in `src/routes/api.ts`.

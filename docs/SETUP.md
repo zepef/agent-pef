@@ -45,14 +45,14 @@ curl -s "https://api.telegram.org/bot<TOKEN>/getMe" | jq '.result.can_read_all_g
 ### Step 2.1: Install Clawdbot
 
 ```bash
-npm install -g clawdbot
-clawdbot --version
+npm install -g openclaw
+openclaw --version
 ```
 
 ### Step 2.2: Run Initial Setup
 
 ```bash
-clawdbot doctor --fix
+openclaw doctor --fix
 ```
 
 ### Step 2.3: Configure Telegram
@@ -67,7 +67,7 @@ Edit `~/.clawdbot/clawdbot.json`:
       "botToken": "<YOUR_LOCAL_BOT_TOKEN>",
       "dmPolicy": "open",
       "groupPolicy": "open",
-      "allowFrom": ["*"],
+      "allowFrom": ["*"],  // SECURITY: Replace "*" with specific Telegram user IDs in production
       "streamMode": "partial"
     }
   },
@@ -83,7 +83,7 @@ Edit `~/.clawdbot/clawdbot.json`:
 ### Step 2.4: Start Local Gateway
 
 ```bash
-clawdbot gateway --port 18789 --verbose
+openclaw gateway --port 18789 --verbose
 ```
 
 You should see:
@@ -167,8 +167,8 @@ curl https://moltbot-sandbox.<subdomain>.workers.dev/api/telegram-status
 
 ### Why Polling Instead of Webhooks?
 
-Clawdbot version 2026.1.24-3 has a bug where the webhook endpoint returns HTTP 405 (Method Not Allowed) for POST requests. This affects both:
-- Direct clawdbot webhook endpoints
+OpenClaw (formerly Clawdbot) prior to v2026.2.3 has a bug where the webhook endpoint returns HTTP 405 (Method Not Allowed) for POST requests. This affects both:
+- Direct openclaw webhook endpoints
 - Proxied webhooks through MoltWorker
 
 **Solution**: Use long polling mode instead of webhooks.
@@ -190,7 +190,10 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
     config.channels.telegram.botToken = process.env.TELEGRAM_BOT_TOKEN;
     config.channels.telegram.enabled = true;
     config.channels.telegram.dmPolicy = process.env.TELEGRAM_DM_POLICY || 'open';
-    config.channels.telegram.allowFrom = ['*'];
+    // SECURITY: Only set allowFrom if not already configured (preserves user-specific allowlists)
+    if (!config.channels.telegram.allowFrom) {
+        config.channels.telegram.allowFrom = ['*'];
+    }
     config.channels.telegram.groupPolicy = 'open';
     // Force polling mode by removing any existing webhook config
     delete config.channels.telegram.webhookUrl;
@@ -279,7 +282,7 @@ curl "https://moltbot-sandbox.<subdomain>.workers.dev/api/start-debug?token=<GAT
 
 **Symptoms**: Telegram webhook fails with "Method Not Allowed"
 
-**Solution**: This is a known clawdbot bug. Switch to polling mode by:
+**Solution**: This is a known bug in older clawdbot versions (fixed in openclaw v2026.2.3+). Switch to polling mode by:
 1. Remove `webhookUrl` from config
 2. Delete webhook from Telegram:
    ```bash
@@ -349,4 +352,4 @@ Environment variable mapping for container:
 
 4. **R2 Credentials**: Store R2 API tokens securely and rotate regularly.
 
-5. **Open Policies**: The `allowFrom: ["*"]` and `dmPolicy: "open"` settings allow anyone to message the bots. Restrict these in production if needed.
+5. **Open Policies**: The `allowFrom: ["*"]` and `dmPolicy: "open"` settings allow **anyone** to message the bots. In production, replace `"*"` with specific Telegram user IDs (e.g., `["123456789"]`) to prevent unauthorized access.

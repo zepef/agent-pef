@@ -207,7 +207,7 @@ function Start-Orchestrator {
 
     $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
     $gatewayProcess = Start-Process -FilePath "npx.cmd" `
-        -ArgumentList "clawdbot", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
+        -ArgumentList "openclaw", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
         -RedirectStandardOutput $gatewayLogFile `
         -RedirectStandardError (Join-Path $logDir "gateway-error.log") `
         -WindowStyle Hidden `
@@ -1039,7 +1039,7 @@ function Invoke-GatewayRestart {
         $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
 
         $gatewayProcess = Start-Process -FilePath "npx.cmd" `
-            -ArgumentList "clawdbot", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
+            -ArgumentList "openclaw", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
             -RedirectStandardOutput $gatewayLogFile `
             -RedirectStandardError (Join-Path $logDir "gateway-error.log") `
             -WindowStyle Hidden `
@@ -1134,7 +1134,7 @@ function Invoke-FullRestart {
         $port = if ($profileConfig.port) { $profileConfig.port } else { 18790 }
 
         $gatewayProcess = Start-Process -FilePath "npx.cmd" `
-            -ArgumentList "clawdbot", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
+            -ArgumentList "openclaw", "gateway", "--port", "$port", "--bind", "lan", "--verbose", "--allow-unconfigured" `
             -RedirectStandardOutput $gatewayLogFile `
             -RedirectStandardError (Join-Path $logDir "gateway-error.log") `
             -WindowStyle Hidden `

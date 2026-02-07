@@ -43,7 +43,15 @@
       "Bash(git add:*)",
       "Bash(gh repo create:*)",
       "Bash(npm ls:*)",
-      "Bash(\"C:\\\\Users\\\\zepef\\\\AppData\\\\Roaming\\\\npm\\\\clawdbot.cmd\" --version)"
+      "Bash(\"C:\\\\Users\\\\zepef\\\\AppData\\\\Roaming\\\\npm\\\\clawdbot.cmd\" --version)",
+      "Bash(wc:*)",
+      "Bash(npm test)",
+      "Bash(npx vitest run)",
+      "Bash(npx tsc:*)",
+      "Bash(git mv:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nCreate localworker/ subdirectory to mirror moltworker/ structure\n\nMove local bot scripts and docs into localworker/ so both bot instances\nhave their own isolated subdirectory. Renames: scripts/ -> localworker/scripts/,\ndocs/LAPTOP-BOT-SETUP.md -> localworker/docs/SETUP.md,\ndocs/OPENCLAWD-CLI.md -> localworker/docs/CLI.md,\ndocs/IDENTITY_LOCAL.md -> localworker/docs/IDENTITY.md,\ndocs/IDENTITY_CLOUD.md -> moltworker/docs/IDENTITY.md.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(gh api:*)"
     ]
   }
 }

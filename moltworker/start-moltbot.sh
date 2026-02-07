@@ -8,14 +8,13 @@
 
 set -e
 
-# Check if clawdbot gateway is already running - bail early if so
-# Note: CLI is still named "clawdbot" until upstream renames it
-if pgrep -f "clawdbot gateway" > /dev/null 2>&1; then
+# Check if openclaw gateway is already running - bail early if so
+if pgrep -f "openclaw gateway" > /dev/null 2>&1; then
     echo "Moltbot gateway is already running, exiting."
     exit 0
 fi
 
-# Paths (clawdbot paths are used internally - upstream hasn't renamed yet)
+# Paths (data paths still use .clawdbot for backwards compatibility)
 CONFIG_DIR="/root/.clawdbot"
 CONFIG_FILE="$CONFIG_DIR/clawdbot.json"
 TEMPLATE_DIR="/root/.clawdbot-templates"
@@ -176,19 +175,16 @@ if (process.env.CLAWDBOT_GATEWAY_TOKEN) {
     config.gateway.auth.token = process.env.CLAWDBOT_GATEWAY_TOKEN;
 }
 
-// Allow insecure auth for dev mode
-if (process.env.CLAWDBOT_DEV_MODE === 'true') {
-    config.gateway.controlUi = config.gateway.controlUi || {};
-    config.gateway.controlUi.allowInsecureAuth = true;
-}
-
 // Telegram configuration (polling mode - no webhook)
 if (process.env.TELEGRAM_BOT_TOKEN) {
     config.channels.telegram = config.channels.telegram || {};
     config.channels.telegram.botToken = process.env.TELEGRAM_BOT_TOKEN;
     config.channels.telegram.enabled = true;
     config.channels.telegram.dmPolicy = process.env.TELEGRAM_DM_POLICY || 'open';
-    config.channels.telegram.allowFrom = ['*'];
+    // Only set allowFrom if not already configured (preserve user-specific allowlists from R2 backup)
+    if (!config.channels.telegram.allowFrom) {
+        config.channels.telegram.allowFrom = ['*'];
+    }
     config.channels.telegram.groupPolicy = 'open';
     // Force polling mode by removing any existing webhook config
     delete config.channels.telegram.webhookUrl;
@@ -235,7 +231,7 @@ if (process.env.OPENAI_API_KEY) {
         ]
     };
     // Note: OPENAI_API_KEY is passed via environment variable, not config
-    // The clawdbot runtime reads it from process.env automatically
+    // The openclaw runtime reads it from process.env automatically
 }
 
 // Clean up any incomplete openai provider config (missing required fields)
@@ -346,8 +342,8 @@ echo "Starting Moltbot Gateway..."
 echo "Gateway will be available on port 18789"
 
 # Force kill any existing gateway processes to prevent port conflicts
-# Build timestamp: 2026-02-04T06:45:00Z
-pkill -9 -f "clawdbot gateway" 2>/dev/null || true
+# Build timestamp: 2026-02-07T00:00:00Z
+pkill -9 -f "openclaw gateway" 2>/dev/null || true
 pkill -9 -f "node.*gateway" 2>/dev/null || true
 sleep 2
 
@@ -360,8 +356,8 @@ echo "Dev mode: ${CLAWDBOT_DEV_MODE:-false}, Bind mode: $BIND_MODE"
 
 if [ -n "$CLAWDBOT_GATEWAY_TOKEN" ]; then
     echo "Starting gateway with token auth..."
-    exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE" --token "$CLAWDBOT_GATEWAY_TOKEN"
+    exec openclaw gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE" --token "$CLAWDBOT_GATEWAY_TOKEN"
 else
     echo "Starting gateway with device pairing (no token)..."
-    exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
+    exec openclaw gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi

@@ -7,8 +7,8 @@ Quick reference guide for launching, deploying, and managing the Agent PEF Teleg
 ### Starting Local Bot
 
 ```bash
-# Start the local clawdbot gateway
-clawdbot gateway --port 18789 --verbose
+# Start the local openclaw gateway
+openclaw gateway --port 18789 --verbose
 ```
 
 The bot will be available at `ws://127.0.0.1:18789` and will start receiving Telegram messages.
@@ -155,7 +155,7 @@ curl "https://api.telegram.org/botYOUR_TOKEN/getMe"
 ### Modify Local Bot Config
 
 1. Edit `C:\Users\<username>\.clawdbot\clawdbot.json`
-2. Restart the gateway: `clawdbot gateway --port 18789 --verbose`
+2. Restart the gateway: `openclaw gateway --port 18789 --verbose`
 
 ### Modify MoltWorker Config
 

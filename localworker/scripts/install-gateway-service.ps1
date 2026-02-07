@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     This script downloads NSSM (if needed) and creates a Windows service
-    for the clawdbot gateway that auto-restarts on crash and starts on boot.
+    for the openclaw gateway that auto-restarts on crash and starts on boot.
 
 .EXAMPLE
     .\install-gateway-service.ps1
@@ -15,7 +15,7 @@ $ErrorActionPreference = "Stop"
 
 $ServiceName = "peflaptopbot"
 $DisplayName = "PEF Laptop Bot Gateway"
-$Description = "Clawdbot Telegram gateway for @peflaptopbot"
+$Description = "OpenClaw Telegram gateway for @peflaptopbot"
 $GatewayPort = 18790
 $NssmPath = "C:\tools\nssm-2.24\win64\nssm.exe"
 $LogDir = "$env:USERPROFILE\.clawdbot\logs"
@@ -75,11 +75,11 @@ if (-not (Test-Path $NssmPath)) {
     Write-Host "`n[1/5] NSSM already installed" -ForegroundColor Green
 }
 
-# Step 2: Find clawdbot
-Write-Host "`n[2/5] Locating clawdbot..." -ForegroundColor Yellow
-$clawdbotCmd = Get-Command clawdbot -ErrorAction SilentlyContinue
+# Step 2: Find openclaw
+Write-Host "`n[2/5] Locating openclaw..." -ForegroundColor Yellow
+$clawdbotCmd = Get-Command openclaw -ErrorAction SilentlyContinue
 if (-not $clawdbotCmd) {
-    Write-Error "clawdbot not found in PATH. Please install it first: npm install -g clawdbot"
+    Write-Error "openclaw not found in PATH. Please install it first: npm install -g openclaw"
     exit 1
 }
 $ClawdbotPath = $clawdbotCmd.Source

@@ -175,8 +175,8 @@ publicRoutes.post('/api/force-kill', async (c) => {
     const fuserProc = await sandbox.startProcess('fuser -k 18789/tcp 2>/dev/null || true');
     await new Promise(r => setTimeout(r, 2000));
 
-    // Kill any clawdbot/node gateway processes
-    const killProc = await sandbox.startProcess('pkill -9 -f clawdbot || pkill -9 -f "node.*18789" || true');
+    // Kill any openclaw/node gateway processes
+    const killProc = await sandbox.startProcess('pkill -9 -f openclaw || pkill -9 -f "node.*18789" || true');
     await new Promise(r => setTimeout(r, 2000));
     const killLogs = await killProc.getLogs();
 

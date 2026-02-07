@@ -71,20 +71,20 @@ cd agent-pef
 ### 3.1 Install Globally
 
 ```powershell
-npm install -g clawdbot
+npm install -g openclaw
 ```
 
 ### 3.2 Verify Installation
 
 ```powershell
-clawdbot --version
+openclaw --version
 # Expected: 2026.1.24-3 or newer
 ```
 
 ### 3.3 Run Initial Setup
 
 ```powershell
-clawdbot doctor --fix
+openclaw doctor --fix
 ```
 
 ---
@@ -134,7 +134,7 @@ Location: `C:\Users\<username>\.clawdbot\clawdbot.json`
       "botToken": "<YOUR_LOCAL_BOT_TOKEN>",
       "dmPolicy": "open",
       "groupPolicy": "open",
-      "allowFrom": ["*"],
+      "allowFrom": ["*"],  // SECURITY: Replace "*" with specific Telegram user IDs in production
       "streamMode": "partial"
     }
   },
@@ -150,7 +150,7 @@ Location: `C:\Users\<username>\.clawdbot\clawdbot.json`
 ### 5.2 Start Local Gateway
 
 ```powershell
-clawdbot gateway --port 18789 --verbose
+openclaw gateway --port 18789 --verbose
 ```
 
 Expected output:
@@ -252,7 +252,7 @@ curl https://moltbot-sandbox.<subdomain>.workers.dev/api/telegram-status
 ## Part 8: Verification Checklist
 
 ### Local Bot
-- [ ] `clawdbot --version` works
+- [ ] `openclaw --version` works
 - [ ] Gateway starts without errors
 - [ ] `[telegram] starting provider` appears in logs
 - [ ] DM to bot gets response
@@ -274,14 +274,14 @@ curl https://moltbot-sandbox.<subdomain>.workers.dev/api/telegram-status
 
 ## Troubleshooting
 
-### "clawdbot: command not found"
+### "openclaw: command not found"
 
 ```powershell
 # Add npm to PATH for current session
 $env:PATH += ";C:\Users\$env:USERNAME\AppData\Roaming\npm"
 
 # Or use full path
-& "C:\Users\$env:USERNAME\AppData\Roaming\npm\clawdbot.cmd" --version
+& "C:\Users\$env:USERNAME\AppData\Roaming\npm\openclaw.cmd" --version
 ```
 
 ### "cygpath: command not found"
@@ -294,18 +294,18 @@ $env:CLAUDE_CODE_GIT_BASH_PATH = "D:\Program Files\Git\bin\bash.exe"
 ### PTY spawn failed
 
 ```powershell
-# Reinstall clawdbot with optional dependencies
-npm install -g clawdbot
+# Reinstall openclaw with optional dependencies
+npm install -g openclaw
 
 # Install Windows PTY manually if needed
-npm install --prefix "$env:APPDATA\npm\node_modules\clawdbot" @lydell/node-pty-win32-x64
+npm install --prefix "$env:APPDATA\npm\node_modules\openclaw" @lydell/node-pty-win32-x64
 ```
 
 ### Gateway already running
 
 ```powershell
 # Find and kill existing process
-Get-Process -Name node | Where-Object {$_.CommandLine -like "*clawdbot*"} | Stop-Process -Force
+Get-Process -Name node | Where-Object {$_.CommandLine -like "*openclaw*"} | Stop-Process -Force
 
 # Or by PID (shown in error message)
 Stop-Process -Id <PID> -Force
@@ -353,7 +353,7 @@ curl -X POST "https://moltbot-sandbox.<subdomain>.workers.dev/api/restart?token=
 
 ```powershell
 # Start local bot
-clawdbot gateway --port 18789 --verbose
+openclaw gateway --port 18789 --verbose
 
 # Deploy cloud bot
 cd moltworker && npm run deploy

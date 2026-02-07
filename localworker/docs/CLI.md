@@ -232,7 +232,7 @@ Profiles are stored at `%USERPROFILE%\.clawdbot\profiles\<name>.json`:
   "telegram": {
     "dmPolicy": "open",
     "groupPolicy": "open",
-    "allowFrom": ["*"],
+    "allowFrom": ["*"],  // SECURITY: Replace "*" with specific Telegram user IDs in production
     "groups": {
       "*": {
         "requireMention": false,
@@ -262,7 +262,7 @@ Profiles are stored at `%USERPROFILE%\.clawdbot\profiles\<name>.json`:
 | `botToken` | Telegram bot token | Required |
 | `telegram.dmPolicy` | DM access policy | "open" |
 | `telegram.groupPolicy` | Group access policy | "open" |
-| `telegram.allowFrom` | Allowed user IDs | ["*"] |
+| `telegram.allowFrom` | Allowed user IDs (restrict to specific IDs in production) | ["*"] |
 | `telegram.replyToMode` | Reply threading mode | "first" |
 | `telegram.streamMode` | Streaming mode | "partial" |
 
@@ -480,9 +480,9 @@ Get-EventLog -LogName Application -Source "openclawd-*" -Newest 10
   npm install -g cloudflared
   # or download from https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
   ```
-- **clawdbot** - Telegram bot gateway
+- **openclaw** - Telegram bot gateway
   ```powershell
-  npm install -g clawdbot
+  npm install -g openclaw
   ```
 - **NSSM** (for Windows service) - Auto-downloaded during service installation
 
