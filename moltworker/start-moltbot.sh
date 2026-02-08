@@ -208,10 +208,11 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
     config.channels.slack.enabled = true;
 }
 
-// Audio/Voice configuration (OpenAI Whisper for STT, TTS for voice output)
+// Audio transcription configuration (OpenAI Whisper for STT)
+// Note: TTS is not supported by clawdbot config schema
 // Requires OPENAI_API_KEY environment variable (passed via env, not config)
 if (process.env.OPENAI_API_KEY) {
-    console.log('Configuring audio/voice with OpenAI (Whisper STT + TTS)');
+    console.log('Configuring audio transcription with OpenAI Whisper');
     config.tools = config.tools || {};
     config.tools.media = config.tools.media || {};
 
@@ -222,16 +223,15 @@ if (process.env.OPENAI_API_KEY) {
             { provider: 'openai', model: 'whisper-1' }
         ]
     };
-
-    // Text-to-speech (voice output)
-    config.tools.media.tts = {
-        enabled: true,
-        models: [
-            { provider: 'openai', model: 'tts-1' }
-        ]
-    };
     // Note: OPENAI_API_KEY is passed via environment variable, not config
     // The openclaw runtime reads it from process.env automatically
+}
+
+// Clean up invalid config keys from previous deployments
+// Remove tools.media.tts (not supported by clawdbot schema)
+if (config.tools && config.tools.media && config.tools.media.tts) {
+    console.log('Removing unsupported tools.media.tts config');
+    delete config.tools.media.tts;
 }
 
 // Clean up any incomplete openai provider config (missing required fields)

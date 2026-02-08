@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 import { MOLTBOT_PORT } from '../config';
 import { findExistingMoltbotProcess, ensureMoltbotGateway } from '../gateway';
+import { verifyGatewayToken } from '../auth';
 
 /**
  * Public routes - NO Cloudflare Access authentication required
@@ -28,6 +29,37 @@ publicRoutes.get('/logo.png', (c) => {
 // GET /logo-small.png - Serve small logo from ASSETS binding
 publicRoutes.get('/logo-small.png', (c) => {
   return c.env.ASSETS.fetch(c.req.raw);
+});
+
+// GET /api/debug-start - Debug endpoint to see startup errors
+publicRoutes.get('/api/debug-start', async (c) => {
+  const sandbox = c.get('sandbox');
+  try {
+    const allProcesses = await sandbox.listProcesses();
+    const failedProcs = allProcesses.filter((p: { command?: string; status: string }) =>
+      p.command?.includes('start-moltbot.sh') && p.status === 'failed'
+    ).slice(-3);
+
+    const failedLogs: { id: string; stdout: string; stderr: string }[] = [];
+    for (const proc of failedProcs) {
+      const logs = await proc.getLogs();
+      failedLogs.push({
+        id: proc.id,
+        stdout: logs.stdout?.slice(-3000) || '',
+        stderr: logs.stderr?.slice(-2000) || '',
+      });
+    }
+
+    try {
+      const process = await ensureMoltbotGateway(sandbox, c.env);
+      const logs = await process.getLogs();
+      return c.json({ ok: true, processId: process.id, status: process.status, stdout: logs.stdout?.slice(-3000), stderr: logs.stderr?.slice(-2000), failedLogs });
+    } catch (err) {
+      return c.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown', failedLogs });
+    }
+  } catch (err) {
+    return c.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown' });
+  }
 });
 
 // GET /api/status - Public health check for gateway status (no auth required)
@@ -84,14 +116,12 @@ publicRoutes.get('/telegram/webhook', async (c) => {
 });
 
 // GET /api/start-debug - Public endpoint to explicitly start gateway and report errors
-// Requires the gateway token as a query parameter for basic protection
+// Requires the gateway token via Authorization header (Bearer) or query param (deprecated)
 publicRoutes.get('/api/start-debug', async (c) => {
   const sandbox = c.get('sandbox');
-  const token = c.req.query('token');
 
-  // Require token for this debug endpoint
-  if (!token || token !== c.env.MOLTBOT_GATEWAY_TOKEN) {
-    return c.json({ ok: false, error: 'Invalid token' }, 401);
+  if (!verifyGatewayToken(c)) {
+    return c.json({ ok: false, error: 'Invalid or missing token. Use Authorization: Bearer <token> header.' }, 401);
   }
 
   try {
@@ -140,14 +170,12 @@ publicRoutes.get('/api/start-debug', async (c) => {
 });
 
 // POST /api/restart - Public endpoint to restart the gateway (for debugging)
-// Requires the gateway token as a query parameter for basic protection
+// Requires the gateway token via Authorization header (Bearer) or query param (deprecated)
 publicRoutes.post('/api/restart', async (c) => {
   const sandbox = c.get('sandbox');
-  const token = c.req.query('token');
 
-  // Require token for restart
-  if (!token || token !== c.env.MOLTBOT_GATEWAY_TOKEN) {
-    return c.json({ ok: false, error: 'Invalid token' }, 401);
+  if (!verifyGatewayToken(c)) {
+    return c.json({ ok: false, error: 'Invalid or missing token. Use Authorization: Bearer <token> header.' }, 401);
   }
 
   try {
@@ -162,12 +190,12 @@ publicRoutes.post('/api/restart', async (c) => {
 });
 
 // POST /api/force-kill - Force kill all gateway processes (for stuck processes)
+// Requires the gateway token via Authorization header (Bearer) or query param (deprecated)
 publicRoutes.post('/api/force-kill', async (c) => {
   const sandbox = c.get('sandbox');
-  const token = c.req.query('token');
 
-  if (!token || token !== c.env.MOLTBOT_GATEWAY_TOKEN) {
-    return c.json({ ok: false, error: 'Invalid token' }, 401);
+  if (!verifyGatewayToken(c)) {
+    return c.json({ ok: false, error: 'Invalid or missing token. Use Authorization: Bearer <token> header.' }, 401);
   }
 
   try {
@@ -196,13 +224,13 @@ publicRoutes.post('/api/force-kill', async (c) => {
 });
 
 // GET /api/process-logs/:id - Get logs from a specific process
+// Requires the gateway token via Authorization header (Bearer) or query param (deprecated)
 publicRoutes.get('/api/process-logs/:id', async (c) => {
   const sandbox = c.get('sandbox');
   const processId = c.req.param('id');
-  const token = c.req.query('token');
 
-  if (!token || token !== c.env.MOLTBOT_GATEWAY_TOKEN) {
-    return c.json({ ok: false, error: 'Invalid token' }, 401);
+  if (!verifyGatewayToken(c)) {
+    return c.json({ ok: false, error: 'Invalid or missing token. Use Authorization: Bearer <token> header.' }, 401);
   }
 
   try {

@@ -3,6 +3,41 @@ import type { AppEnv, MoltbotEnv } from '../types';
 import { verifyAccessJWT } from './jwt';
 
 /**
+ * Extract gateway token from Authorization header or query parameter.
+ * Prefers the Authorization header (Bearer token) for security.
+ * Query parameter support is maintained for backwards compatibility but
+ * should be considered deprecated - tokens in URLs appear in server logs,
+ * browser history, and referrer headers.
+ */
+export function extractGatewayToken(c: Context<AppEnv>): string | null {
+  // Prefer Authorization header
+  const authHeader = c.req.header('Authorization');
+  if (authHeader) {
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  // Fall back to query parameter (deprecated)
+  return c.req.query('token') || null;
+}
+
+/**
+ * Verify the gateway token from the request.
+ * Returns true if the token matches the expected MOLTBOT_GATEWAY_TOKEN.
+ */
+export function verifyGatewayToken(c: Context<AppEnv>): boolean {
+  const expectedToken = c.env.MOLTBOT_GATEWAY_TOKEN;
+  if (!expectedToken) return false;
+
+  const providedToken = extractGatewayToken(c);
+  if (!providedToken) return false;
+
+  return providedToken === expectedToken;
+}
+
+/**
  * Options for creating an access middleware
  */
 export interface AccessMiddlewareOptions {
@@ -44,6 +79,7 @@ export function createAccessMiddleware(options: AccessMiddlewareOptions) {
   return async (c: Context<AppEnv>, next: Next) => {
     // Skip auth in dev mode
     if (isDevMode(c.env)) {
+      console.warn('[AUTH] DEV_MODE active - skipping all authentication');
       c.set('accessUser', { email: 'dev@localhost', name: 'Dev User' });
       return next();
     }

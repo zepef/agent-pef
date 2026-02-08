@@ -30,7 +30,7 @@ RUN mkdir -p /root/.clawdbot \
 # Copy startup script
 # Build cache bust: 2026-02-07-v32-openclaw-cve-fix
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
-RUN chmod +x /usr/local/bin/start-moltbot.sh
+RUN sed -i 's/\r$//' /usr/local/bin/start-moltbot.sh && chmod +x /usr/local/bin/start-moltbot.sh
 
 # Copy default configuration template
 COPY moltbot.json.template /root/.clawdbot-templates/moltbot.json.template
