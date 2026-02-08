@@ -54,7 +54,11 @@
       "Bash(gh api:*)",
       "Bash(git rm:*)",
       "Bash(xxd:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git reset:*)",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "Bash(sqlite3:*)",
+      "mcp__plugin_claude-mem_mcp-search__get_observations"
     ]
   }
 }
