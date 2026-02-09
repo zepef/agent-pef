@@ -1,0 +1,9 @@
+[submodule "pefcloudbot"]
+	path = pefcloudbot
+	url = https://github.com/zepef/pefcloudbot.git
+[submodule "peflaptopbot"]
+	path = peflaptopbot
+	url = https://github.com/zepef/peflaptopbot.git
+[submodule "pefstationbot"]
+	path = pefstationbot
+	url = https://github.com/zepef/pefstationbot.git

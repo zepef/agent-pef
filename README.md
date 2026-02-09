@@ -23,6 +23,26 @@ Three-bot Telegram orchestration with Cloudflare Workers and local Clawdbot inst
    └─────────────┘          └─────────────┘         └──────────────────┘
 ```
 
+## Cloning
+
+Each bot directory is a **git submodule**. Clone with all submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/zepef/agent-pef.git
+```
+
+Or clone a single bot repo directly:
+
+```bash
+git clone https://github.com/zepef/pefstationbot.git
+```
+
+If you already cloned without `--recurse-submodules`:
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Quick Start
 
 ### Laptop Bot
@@ -72,31 +92,9 @@ agent-pef/
 │   ├── INSTALL.md         # Installation guide
 │   ├── SETUP.md           # Configuration details
 │   └── USER_MANUAL.md     # Operations manual
-├── peflaptopbot/          # Laptop bot (openclaw + Cloudflare Tunnel)
-│   ├── README.md          # Laptop bot overview
-│   ├── docs/              # Laptop bot documentation
-│   │   ├── IDENTITY.md    # Bot persona
-│   │   ├── SETUP.md       # Setup guide
-│   │   └── CLI.md         # CLI reference
-│   └── scripts/           # Orchestration scripts
-│       ├── openclawd.ps1
-│       └── openclawd-lib.ps1
-├── pefstationbot/         # Station bot (openclaw + Cloudflare Tunnel)
-│   ├── README.md          # Station bot overview
-│   ├── docs/              # Station bot documentation
-│   │   ├── IDENTITY.md    # Bot persona
-│   │   ├── SETUP.md       # Setup guide
-│   │   └── CLI.md         # CLI reference
-│   └── scripts/           # Orchestration scripts
-│       ├── openclawd.ps1
-│       └── openclawd-lib.ps1
-└── pefcloudbot/           # Cloud bot (Cloudflare Workers)
-    ├── docs/
-    │   └── IDENTITY.md    # Bot persona
-    ├── Dockerfile
-    ├── start-moltbot.sh
-    ├── wrangler.jsonc
-    └── src/
+├── peflaptopbot/          # ⟶ submodule: github.com/zepef/peflaptopbot
+├── pefstationbot/         # ⟶ submodule: github.com/zepef/pefstationbot
+└── pefcloudbot/           # ⟶ submodule: github.com/zepef/pefcloudbot
 ```
 
 ## Requirements
