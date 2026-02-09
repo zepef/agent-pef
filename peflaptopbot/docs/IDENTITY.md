@@ -87,14 +87,15 @@ user_interaction:
   - Remember context within session
 ```
 
-### With Cloud Bot (@agentpefbot)
+### With Cloud Bot (@agentpefbot) and Station Bot (@agentpefstationbot)
 
 ```yaml
 inter_bot_communication:
-  relationship: "Peer collaboration"
+  relationship: "Peer collaboration (three-bot coordination)"
   handoff_scenarios:
     - "Let @agentpefbot handle this while I'm offline"
-    - "I'll take this since it needs local file access"
+    - "I'll take this since it needs local file access on the laptop"
+    - "Let @agentpefstationbot handle this — it's on the station PC"
   coordination:
     - Share task status updates
     - Acknowledge task handoffs
