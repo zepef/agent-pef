@@ -97,13 +97,40 @@ agent-pef/
 └── pefcloudbot/           # ⟶ submodule: github.com/zepef/pefcloudbot
 ```
 
+## Creating a New Bot
+
+Each bot repo is a self-contained template. To create a new bot instance:
+
+**Local bot** (like laptop/station):
+```bash
+# Fork an existing local bot repo on GitHub, then:
+git clone https://github.com/zepef/your-new-bot.git
+cd your-new-bot
+npm install -g openclaw
+.\scripts\openclawd.ps1 create-profile
+# Enter: new bot name, token from @BotFather, unused port
+.\scripts\openclawd.ps1 start your-new-bot
+```
+
+**Cloud bot** (Cloudflare Workers):
+```bash
+git clone https://github.com/zepef/pefcloudbot.git your-new-cloudbot
+cd your-new-cloudbot
+npm install
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npm run deploy
+```
+
+The local bot repos (`peflaptopbot`, `pefstationbot`) share the same scripts and structure — only the profile config (bot token, port, name) differs.
+
 ## Requirements
 
 - Node.js 22+
 - Git for Windows
-- Cloudflare Workers Paid ($5/mo)
+- Cloudflare Workers Paid ($5/mo) — cloud bot only
 - Anthropic API key
-- Three Telegram bots (via @BotFather)
+- Telegram bot token per bot (via @BotFather)
 
 ## License
 
