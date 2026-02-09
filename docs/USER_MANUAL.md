@@ -13,16 +13,16 @@ openclaw gateway --port 18789 --verbose
 
 The bot will be available at `ws://127.0.0.1:18789` and will start receiving Telegram messages.
 
-### Deploying MoltWorker
+### Deploying Cloud Bot
 
 ```bash
-cd E:\Projects\agent-pef\moltworker
+cd pefcloudbot
 
 # Deploy to Cloudflare
 npm run deploy
 ```
 
-The MoltWorker will be available at `https://moltbot-sandbox.<your-subdomain>.workers.dev`
+The cloud bot will be available at `https://moltbot-sandbox.<your-subdomain>.workers.dev`
 
 ---
 
@@ -38,7 +38,7 @@ Look for these lines in the terminal:
 [gateway] listening on ws://127.0.0.1:18789
 ```
 
-#### MoltWorker
+#### Cloud Bot
 
 ```bash
 # Quick status check
@@ -57,7 +57,7 @@ curl https://moltbot-sandbox.zepef.workers.dev/api/status
 
 Press `Ctrl+C` in the terminal running the gateway.
 
-#### MoltWorker
+#### Cloud Bot
 
 ```bash
 # Force stop (will auto-restart on next request)
@@ -68,10 +68,10 @@ curl -X POST "https://moltbot-sandbox.zepef.workers.dev/api/restart?token=YOUR_G
 
 ## Deployment Commands
 
-### MoltWorker Deployment
+### Cloud Bot Deployment
 
 ```bash
-cd E:\Projects\agent-pef\moltworker
+cd E:\Projects\agent-pef\pefcloudbot
 
 # Full deployment (build + deploy + container image)
 npm run deploy
@@ -86,7 +86,7 @@ npx wrangler tail
 ### Updating Secrets
 
 ```bash
-cd E:\Projects\agent-pef\moltworker
+cd E:\Projects\agent-pef\pefcloudbot
 
 # Update a secret
 npx wrangler secret put SECRET_NAME
@@ -157,9 +157,9 @@ curl "https://api.telegram.org/botYOUR_TOKEN/getMe"
 1. Edit `C:\Users\<username>\.clawdbot\clawdbot.json`
 2. Restart the gateway: `openclaw gateway --port 18789 --verbose`
 
-### Modify MoltWorker Config
+### Modify Cloud Bot Config
 
-1. Edit files in `E:\Projects\agent-pef\moltworker\`
+1. Edit files in `pefcloudbot/`
    - `start-moltbot.sh` for startup configuration
    - `moltbot.json.template` for default config template
 2. Redeploy: `npm run deploy`
@@ -172,7 +172,7 @@ curl "https://api.telegram.org/botYOUR_TOKEN/getMe"
 
 1. Open Telegram
 2. Create or open the group
-3. Add the bot by username (`@agentpeflaptopbot` or `@agentpefbot`)
+3. Add the bot by username (`@agentpeflaptopbot`, `@agentpefstationbot`, or `@agentpefbot`)
 4. Verify bot can see messages (privacy mode must be off)
 
 ### Regenerate Bot Token
@@ -182,7 +182,7 @@ curl "https://api.telegram.org/botYOUR_TOKEN/getMe"
 3. Copy new token
 4. Update configuration:
    - **Local**: Edit `~/.clawdbot/clawdbot.json`
-   - **MoltWorker**: `npx wrangler secret put TELEGRAM_BOT_TOKEN`
+   - **Cloud Bot**: `npx wrangler secret put TELEGRAM_BOT_TOKEN`
 5. Restart/redeploy
 
 ### Check Bot Privacy Mode
@@ -215,7 +215,7 @@ curl "https://api.telegram.org/botYOUR_TOKEN/getMe"
 | `ws://127.0.0.1:18789` | Gateway WebSocket |
 | `http://127.0.0.1:18789` | Gateway HTTP |
 
-### MoltWorker
+### Cloud Bot
 
 | URL | Description |
 |-----|-------------|
@@ -235,7 +235,7 @@ Set in shell or use `.env` file:
 export ANTHROPIC_API_KEY="your-key"
 ```
 
-### MoltWorker Secrets
+### Cloud Bot Secrets
 
 All configured via `wrangler secret put`:
 
@@ -262,7 +262,7 @@ Location: `C:\Users\<username>\.clawdbot\`
 
 Backup the entire `.clawdbot` directory.
 
-### MoltWorker Data
+### Cloud Bot Data
 
 Data is automatically synced to R2 every 5 minutes (if R2 is configured).
 
@@ -272,6 +272,6 @@ Manual backup:
 
 ### Restore from R2
 
-MoltWorker automatically restores from R2 on container startup if:
+Cloud Bot automatically restores from R2 on container startup if:
 - R2 is configured
 - R2 backup exists and is newer than local data

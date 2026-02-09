@@ -1,6 +1,6 @@
 # Detailed Setup Guide
 
-This document provides step-by-step instructions for setting up the Agent PEF dual-bot Telegram system.
+This document provides step-by-step instructions for setting up the Agent PEF three-bot Telegram system.
 
 ## Prerequisites
 
@@ -8,7 +8,7 @@ This document provides step-by-step instructions for setting up the Agent PEF du
 - npm or pnpm
 - Cloudflare account with Workers Paid plan ($5/month)
 - Anthropic API key
-- Two Telegram bots created via @BotFather
+- Three Telegram bots created via @BotFather
 - Docker Desktop (for local container builds)
 
 ## Part 1: Create Telegram Bots
@@ -17,9 +17,10 @@ This document provides step-by-step instructions for setting up the Agent PEF du
 
 1. Open Telegram and message @BotFather
 2. Send `/newbot` and follow prompts for each bot:
-   - **Local bot**: e.g., `agent-pef-bot-laptop` → `@agentpeflaptopbot`
+   - **Laptop bot**: e.g., `agent-pef-bot-laptop` → `@agentpeflaptopbot`
+   - **Station bot**: e.g., `agent-pef-bot-station` → `@agentpefstationbot`
    - **Cloud bot**: e.g., `agent-pef-bot-cloud` → `@agentpefbot`
-3. Save both bot tokens securely
+3. Save all three bot tokens securely
 
 ### Step 1.2: Disable Privacy Mode
 
@@ -98,8 +99,8 @@ You should see:
 
 ```bash
 cd E:\Projects\agent-pef
-git clone <moltworker-repo> moltworker
-cd moltworker
+git clone <pefcloudbot-repo> pefcloudbot
+cd pefcloudbot
 npm install
 ```
 
@@ -217,14 +218,14 @@ curl -s "https://api.telegram.org/bot<TOKEN>/getWebhookInfo" | jq '.result.pendi
 ### Step 5.1: Create Telegram Group
 
 1. Create a new Telegram group (e.g., "pef-agents")
-2. Add both bots to the group
+2. Add all three bots to the group
 
 ### Step 5.2: Verify Bots Can See Messages
 
 1. Send a test message in the group
-2. Check both bots' logs for the message
+2. Check all bots' logs for the message
 
-For MoltWorker, use the debug endpoint:
+For the cloud bot, use the debug endpoint:
 ```bash
 curl "https://moltbot-sandbox.<subdomain>.workers.dev/api/start-debug?token=<GATEWAY_TOKEN>"
 ```
@@ -318,14 +319,14 @@ curl "https://moltbot-sandbox.<subdomain>.workers.dev/api/start-debug?token=<GAT
 
 ## Part 8: Files Modified
 
-### `moltworker/start-moltbot.sh`
+### `pefcloudbot/start-moltbot.sh`
 
 Key changes:
 - Added Telegram polling mode configuration
 - Explicitly delete webhookUrl/webhookPath to force polling
 - Set open policies for DM and groups
 
-### `moltworker/src/routes/public.ts`
+### `pefcloudbot/src/routes/public.ts`
 
 Added debug endpoints:
 - `/api/telegram-status` - Check Telegram config in container
@@ -333,7 +334,7 @@ Added debug endpoints:
 - `/api/restart` - Force gateway restart
 - `/api/process-logs/:id` - Get logs from specific processes
 
-### `moltworker/src/gateway/env.ts`
+### `pefcloudbot/src/gateway/env.ts`
 
 Environment variable mapping for container:
 - Maps `TELEGRAM_BOT_TOKEN` to container env

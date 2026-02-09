@@ -98,10 +98,11 @@ openclaw doctor --fix
 
 | Bot | Suggested Name | Purpose |
 |-----|----------------|---------|
-| Local | `agent-pef-bot-laptop` | Local machine bot |
+| Laptop | `agent-pef-bot-laptop` | Laptop local bot |
+| Station | `agent-pef-bot-station` | Station PC local bot |
 | Cloud | `agent-pef-bot-cloud` | Cloudflare Workers bot |
 
-3. **Save both tokens securely**
+3. **Save all three tokens securely**
 
 ### 4.2 Disable Privacy Mode (REQUIRED)
 
@@ -166,7 +167,7 @@ Expected output:
 ### 6.1 Install Dependencies
 
 ```powershell
-cd E:\Projects\agent-pef\moltworker
+cd E:\Projects\agent-pef\pefcloudbot
 npm install
 ```
 
@@ -345,8 +346,8 @@ curl -X POST "https://moltbot-sandbox.<subdomain>.workers.dev/api/restart?token=
 | File | Purpose |
 |------|---------|
 | `~/.clawdbot/clawdbot.json` | Local bot config |
-| `moltworker/start-moltbot.sh` | Container startup |
-| `moltworker/wrangler.jsonc` | Cloudflare config |
+| `pefcloudbot/start-moltbot.sh` | Container startup |
+| `pefcloudbot/wrangler.jsonc` | Cloudflare config |
 | `AGENTS.md` | Safety rules |
 
 ### Commands
@@ -356,7 +357,7 @@ curl -X POST "https://moltbot-sandbox.<subdomain>.workers.dev/api/restart?token=
 openclaw gateway --port 18789 --verbose
 
 # Deploy cloud bot
-cd moltworker && npm run deploy
+cd pefcloudbot && npm run deploy
 
 # View cloud logs
 npx wrangler tail

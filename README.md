@@ -1,40 +1,48 @@
 # Agent PEF
 
-Dual-bot Telegram orchestration with Cloudflare Workers and local Clawdbot.
+Three-bot Telegram orchestration with Cloudflare Workers and local Clawdbot instances.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│              Telegram Group: pef-agents                  │
-│                                                          │
-│    @agentpeflaptopbot          @agentpefbot              │
-│    (Local Clawdbot)            (MoltWorker)              │
-│          │                          │                    │
-└──────────┼──────────────────────────┼────────────────────┘
-           │                          │
-           ▼                          ▼
-    ┌─────────────┐           ┌──────────────────┐
-    │ Local PC    │           │ Cloudflare       │
-    │ • Files     │           │ • Always-on      │
-    │ • Pro sub   │           │ • R2 storage     │
-    │ • Dev tools │           │ • API billing    │
-    └─────────────┘           └──────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                      Telegram Group: pef-agents                          │
+│                                                                          │
+│   @agentpeflaptopbot       @agentpefstationbot       @agentpefbot        │
+│   (Laptop)                 (Station PC)              (Cloud)             │
+│   Port 18790               Port 18791                Port 18789          │
+│         │                        │                        │              │
+└─────────┼────────────────────────┼────────────────────────┼──────────────┘
+          │                        │                        │
+          ▼                        ▼                        ▼
+   ┌─────────────┐          ┌─────────────┐         ┌──────────────────┐
+   │ Laptop      │          │ Station PC  │         │ Cloudflare       │
+   │ • Files     │          │ • Files     │         │ • Always-on      │
+   │ • Pro sub   │          │ • Pro sub   │         │ • R2 storage     │
+   │ • Dev tools │          │ • Dev tools │         │ • API billing    │
+   └─────────────┘          └─────────────┘         └──────────────────┘
 ```
 
 ## Quick Start
 
-### Local Bot
+### Laptop Bot
 
 ```powershell
-cd localworker
+cd peflaptopbot
 .\scripts\openclawd.ps1 start peflaptopbot
+```
+
+### Station Bot
+
+```powershell
+cd pefstationbot
+.\scripts\openclawd.ps1 start pefstationbot
 ```
 
 ### Cloud Bot
 
 ```powershell
-cd moltworker
+cd pefcloudbot
 npm run deploy
 ```
 
@@ -45,10 +53,12 @@ npm run deploy
 | [INSTALL.md](docs/INSTALL.md) | **Full installation guide** - start here |
 | [SETUP.md](docs/SETUP.md) | Detailed configuration reference |
 | [USER_MANUAL.md](docs/USER_MANUAL.md) | Daily operations guide |
-| [Local bot identity](localworker/docs/IDENTITY.md) | Local bot persona |
-| [Cloud bot identity](moltworker/docs/IDENTITY.md) | Cloud bot persona |
-| [Local bot setup](localworker/docs/SETUP.md) | Local bot setup guide |
-| [OpenClawd CLI](localworker/docs/CLI.md) | Local bot CLI reference |
+| [Laptop bot identity](peflaptopbot/docs/IDENTITY.md) | Laptop bot persona |
+| [Station bot identity](pefstationbot/docs/IDENTITY.md) | Station bot persona |
+| [Cloud bot identity](pefcloudbot/docs/IDENTITY.md) | Cloud bot persona |
+| [Laptop bot setup](peflaptopbot/docs/SETUP.md) | Laptop bot setup guide |
+| [Station bot setup](pefstationbot/docs/SETUP.md) | Station bot setup guide |
+| [OpenClawd CLI](peflaptopbot/docs/CLI.md) | Local bot CLI reference |
 | [AGENTS.md](AGENTS.md) | Safety rules and boundaries |
 
 ## Project Structure
@@ -62,16 +72,25 @@ agent-pef/
 │   ├── INSTALL.md         # Installation guide
 │   ├── SETUP.md           # Configuration details
 │   └── USER_MANUAL.md     # Operations manual
-├── localworker/           # Local bot (openclaw + Cloudflare Tunnel)
-│   ├── README.md          # Local bot overview
-│   ├── docs/              # Local bot documentation
+├── peflaptopbot/          # Laptop bot (openclaw + Cloudflare Tunnel)
+│   ├── README.md          # Laptop bot overview
+│   ├── docs/              # Laptop bot documentation
 │   │   ├── IDENTITY.md    # Bot persona
 │   │   ├── SETUP.md       # Setup guide
 │   │   └── CLI.md         # CLI reference
 │   └── scripts/           # Orchestration scripts
 │       ├── openclawd.ps1
 │       └── openclawd-lib.ps1
-└── moltworker/            # Cloud bot (Cloudflare Workers)
+├── pefstationbot/         # Station bot (openclaw + Cloudflare Tunnel)
+│   ├── README.md          # Station bot overview
+│   ├── docs/              # Station bot documentation
+│   │   ├── IDENTITY.md    # Bot persona
+│   │   ├── SETUP.md       # Setup guide
+│   │   └── CLI.md         # CLI reference
+│   └── scripts/           # Orchestration scripts
+│       ├── openclawd.ps1
+│       └── openclawd-lib.ps1
+└── pefcloudbot/           # Cloud bot (Cloudflare Workers)
     ├── docs/
     │   └── IDENTITY.md    # Bot persona
     ├── Dockerfile
@@ -86,7 +105,7 @@ agent-pef/
 - Git for Windows
 - Cloudflare Workers Paid ($5/mo)
 - Anthropic API key
-- Two Telegram bots (via @BotFather)
+- Three Telegram bots (via @BotFather)
 
 ## License
 
