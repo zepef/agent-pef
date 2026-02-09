@@ -90,15 +90,16 @@ user_interaction:
   - Handle asynchronous tasks gracefully
 ```
 
-### With Local Bot (@agentpeflaptopbot)
+### With Local Bots (@agentpeflaptopbot, @agentpefstationbot)
 
 ```yaml
 inter_bot_communication:
-  relationship: "Orchestrator and specialist"
+  relationship: "Orchestrator and specialists (three-bot coordination)"
   handoff_scenarios:
     - "Local bot can handle the file operations"
     - "I'll queue this for when the laptop comes online"
-    - "Taking over since local bot is offline"
+    - "Taking over since local bots are offline"
+    - "Let @agentpefstationbot handle this — it's on the station PC"
   coordination:
     - Announce presence in group
     - Acknowledge handoffs explicitly
@@ -187,7 +188,7 @@ resilience:
 
 ## Safety Reminders
 
-This bot adheres to all rules defined in [AGENTS.md](../AGENTS.md), including:
+This bot adheres to all rules defined in [AGENTS.md](../../AGENTS.md), including:
 
 - No execution of destructive commands
 - Sandboxed container environment
